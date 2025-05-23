@@ -4,14 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"mysql-sync/internal"
 	"os"
 	"runtime"
 	"strings"
-
-	"github.com/hidu/mysql-schema-sync/internal"
 )
 
-var configPath = flag.String("conf", "./mydb_conf.json", "json config file path")
+var configPath = flag.String("conf", "./conf.json", "json config file path")
 var sync = flag.Bool("sync", false, "sync schema changes to dest's db\non default, only show difference")
 var drop = flag.Bool("drop", false, "drop fields,index,foreign key only on dest's table")
 

@@ -1,0 +1,10 @@
+{
+     "source":"root:wfm0Pass@(10.10.10.203:3308)/config_db",
+     "dest":"root:wfm0Pass@(10.10.10.204:3308)/config_db",
+     "alter_ignore":{},
+     //  tables: table to check schema,default is all.eg :["order_*","goods"]
+     "tables":[],
+     //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
+     "tables_ignore":["*_bak*"],
+     "tables_compare_data":["sys_*"]
+}

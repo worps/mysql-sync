@@ -1,4 +1,4 @@
-module github.com/hidu/mysql-schema-sync
+module mysql-sync
 
 go 1.20
 
