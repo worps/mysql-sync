@@ -1,4 +1,4 @@
-# mysql-schema-sync
+# mysql-sync
 
 MySQL Schema 自动同步工具  
 功能强大，用于命令行方式进行两个数据库之间的结构同步。同时支持对表进行表数据比较。
@@ -14,7 +14,7 @@ MySQL Schema 自动同步工具
 6. 支持屏蔽更新**表、字段、索引、外键**  
 7. 支持本地比线上额外多一些表、字段、索引、外键
 
-## 配置示例(conf.json):  
+### 配置示例(conf.json):  
 
 ```
 {
@@ -38,30 +38,34 @@ MySQL Schema 自动同步工具
       "tables_compare_data":["sys_*"]
 }
 ```
+### 编译
+```shell
+go build -tags netgo -ldflags '-w -s -extldflags "-static"' -o sync.exe .\main.go
+```
 
 ### 直接进行同步
 
 ```shell
-go run main.go -conf conf.json -sync
+sync.exe -conf conf.json -sync
 ```
 
 ### 生成变更sql
 
 ```shell
-go run main.go -drop -conf conf.json 2>/dev/null >db_alter.sql
+sync.exe -drop -conf conf.json >db_alter.sql
 
 ```
 
 ### 运行参数说明
 
 ```shell
-go run main.go [-conf] [-dest] [-source] [-sync] [-drop]
+sync.exe [-conf] [-dest] [-source] [-sync] [-drop]
 ```
 
 说明：
 
 ```shell
-go run main.go -help  
+sync.exe -help  
   -conf string
         配置文件名称
   -dest string
