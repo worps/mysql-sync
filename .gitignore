@@ -4,3 +4,4 @@ db_alter.sql
 
 build/*
 log/*
+data/*

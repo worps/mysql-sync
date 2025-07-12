@@ -1,6 +1,6 @@
 {
-     "source":"root:wfm0Pass@(10.10.10.203:3308)/config_db",
-     "dest":"root:wfm0Pass@(10.10.10.204:3308)/config_db",
+     "source":"root:wfm0Pass@10.10.10.203:3308/game_config_db",
+     "dest":"root:wfm0Pass@10.10.10.204:3308/game_config_db",
      "alter_ignore":{},
      //  tables: table to check schema,default is all.eg :["order_*","goods"]
      "tables":[],

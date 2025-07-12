@@ -13,9 +13,11 @@ type Config struct {
 
 	// SourceDSN 同步的源头
 	SourceDSN string `json:"source"`
+	SourceSSH string `json:"source_ssh"`
 
 	// DestDSN 将被同步
 	DestDSN string `json:"dest"`
+	DestSSH string `json:"dest_ssh"`
 
 	ConfigPath string
 

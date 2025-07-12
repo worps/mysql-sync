@@ -16,14 +16,29 @@ type MyDb struct {
 }
 
 // NewMyDb parse dsn
-func NewMyDb(dsn string, dbType string) *MyDb {
+func NewMyDb(dsn string, dsnName string, ssh string) *MyDb {
+
+	// 匹配字符串
+	re := regexp.MustCompile(`^([^:]+):([^@]+)@([^:]+):([^/]+)(/.+)$`)
+	matches := re.FindStringSubmatch(dsn)
+	if len(matches) != 6 {
+		panic(fmt.Sprintf("dsn格式错误: %s", dsn))
+	}
+
+	if len(ssh) > 0 {
+		MysqlUseSsh(dsnName, ssh)
+		dsn = fmt.Sprintf("%s:%s@%s(%s:%s)%s", matches[1], matches[2], dsnName, matches[3], matches[4], matches[5])
+	} else {
+		dsn = fmt.Sprintf("%s:%s@(%s:%s)%s", matches[1], matches[2], matches[3], matches[4], matches[5])
+	}
+
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		panic(fmt.Sprintf("connected to db [%s] failed,err=%s", dsn, err))
 	}
 	return &MyDb{
 		Db:     db,
-		dbType: dbType,
+		dbType: dsnName,
 	}
 }
 

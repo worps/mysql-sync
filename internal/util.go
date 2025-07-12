@@ -3,7 +3,6 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
-	"html"
 	"log"
 	"os"
 	"regexp"
@@ -58,16 +57,4 @@ func simpleMatch(patternStr string, str string, msg ...string) bool {
 		log.Println("simple_match:error", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str, "err:", err)
 	}
 	return match
-}
-
-func htmlPre(str string) string {
-	return "<pre>" + html.EscapeString(str) + "</pre>"
-}
-
-func dsnSort(dsn string) string {
-	i := strings.Index(dsn, "@")
-	if i < 1 {
-		return dsn
-	}
-	return dsn[i+1:]
 }
