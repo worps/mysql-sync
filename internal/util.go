@@ -10,10 +10,10 @@ import (
 )
 
 // Version 版本号，格式：更新日期(8位).更新次数(累加)
-const Version = "20220925.3"
+const Version = "2025.1"
 
 // AppURL site
-const AppURL = "https://github.com/hidu/mysql-schema-sync/"
+const AppURL = "https://gitee.com/chrisx/mysql-sync"
 
 const timeFormatStd string = "2006-01-02 15:04:05"
 

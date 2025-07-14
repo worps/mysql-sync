@@ -8,9 +8,6 @@ import (
 
 // Config  config struct
 type Config struct {
-	// AlterIgnore 忽略配置， eg:   "tb1*":{"column":["aaa","a*"],"index":["aa"],"foreign":[]}
-	AlterIgnore map[string]*AlterIgnoreTable `json:"alter_ignore"`
-
 	// SourceDSN 同步的源头
 	SourceDSN string `json:"source"`
 	SourceSSH string `json:"source_ssh"`
@@ -20,6 +17,9 @@ type Config struct {
 	DestSSH string `json:"dest_ssh"`
 
 	ConfigPath string
+
+	// 要同步的数据库
+	Schemas []string `json:"schemas"`
 
 	// Tables 同步表的白名单，若为空，则同步全库
 	Tables []string `json:"tables"`
@@ -42,29 +42,6 @@ type Config struct {
 func (cfg *Config) String() string {
 	ds, _ := json.MarshalIndent(cfg, "  ", "  ")
 	return string(ds)
-}
-
-// AlterIgnoreTable table's ignore info
-type AlterIgnoreTable struct {
-	Column []string `json:"column"`
-	Index  []string `json:"index"`
-
-	// 外键
-	ForeignKey []string `json:"foreign"`
-}
-
-// IsIgnoreField isIgnore
-func (cfg *Config) IsIgnoreField(table string, name string) bool {
-	for tableName, dit := range cfg.AlterIgnore {
-		if simpleMatch(tableName, table, "IsIgnoreField_table") {
-			for _, col := range dit.Column {
-				if simpleMatch(col, name, "IsIgnoreField_colum") {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }
 
 // CheckMatchTables check table is match
@@ -144,34 +121,6 @@ func (cfg *Config) Check() {
 	if len(cfg.DestDSN) == 0 {
 		log.Fatal("dest DSN is empty")
 	}
-}
-
-// IsIgnoreIndex is index ignore
-func (cfg *Config) IsIgnoreIndex(table string, name string) bool {
-	for tableName, dit := range cfg.AlterIgnore {
-		if simpleMatch(tableName, table, "IsIgnoreIndex_table") {
-			for _, index := range dit.Index {
-				if simpleMatch(index, name) {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-// IsIgnoreForeignKey 检查外键是否忽略掉
-func (cfg *Config) IsIgnoreForeignKey(table string, name string) bool {
-	for tableName, dit := range cfg.AlterIgnore {
-		if simpleMatch(tableName, table, "IsIgnoreForeignKey_table") {
-			for _, foreignName := range dit.ForeignKey {
-				if simpleMatch(foreignName, name) {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }
 
 // LoadConfig load config file

@@ -13,46 +13,35 @@ import (
 type MyDb struct {
 	Db     *sql.DB
 	dbType string
+	DbName string
 }
 
 // NewMyDb parse dsn
-func NewMyDb(dsn string, dsnName string, ssh string) *MyDb {
+func NewMyDb(dsn string, dbname string, dsnName string, ssh string) *MyDb {
 
 	// 匹配字符串
-	re := regexp.MustCompile(`^([^:]+):([^@]+)@([^:]+):([^/]+)(/.+)$`)
+	re := regexp.MustCompile(`^([^:]+):([^@]+)@([^:]+):([^/]+)$`)
 	matches := re.FindStringSubmatch(dsn)
-	if len(matches) != 6 {
+	if len(matches) != 5 {
 		panic(fmt.Sprintf("dsn格式错误: %s", dsn))
 	}
 
 	if len(ssh) > 0 {
 		MysqlUseSsh(dsnName, ssh)
-		dsn = fmt.Sprintf("%s:%s@%s(%s:%s)%s", matches[1], matches[2], dsnName, matches[3], matches[4], matches[5])
+		dsn = fmt.Sprintf("%s:%s@%s(%s:%s)/%s", matches[1], matches[2], dsnName, matches[3], matches[4], dbname)
 	} else {
-		dsn = fmt.Sprintf("%s:%s@(%s:%s)%s", matches[1], matches[2], matches[3], matches[4], matches[5])
+		dsn = fmt.Sprintf("%s:%s@(%s:%s)/%s", matches[1], matches[2], matches[3], matches[4], dbname)
 	}
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		panic(fmt.Sprintf("connected to db [%s] failed,err=%s", dsn, err))
 	}
+
 	return &MyDb{
 		Db:     db,
 		dbType: dsnName,
-	}
-}
-
-// print dbName
-func PrintDbName(dsn string) {
-	db, err := sql.Open("mysql", dsn)
-	if err == nil {
-		rs, err := db.Query("SELECT DATABASE()")
-		if err == nil {
-			rs.Next()
-			dbname := ""
-			rs.Scan(&dbname)
-			fmt.Printf("------------------------ db %s -------------------------\n", dbname)
-		}
+		DbName: dbname,
 	}
 }
 

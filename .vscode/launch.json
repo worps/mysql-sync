@@ -5,11 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "debug sync",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${fileDirname}"
+            "program": "${fileDirname}/.."
+        },
+        {
+            "name": "debug compare sql",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${fileDirname}/..",
+            "args": ["-cmd", "cs", "-sql", "select club_type,count(1) cc from game_main_db.club where club_id<0 group by club_type"]
         }
     ]
 }

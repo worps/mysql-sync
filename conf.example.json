@@ -1,10 +1,11 @@
 {
-     "source":"root:wfm0Pass@10.10.10.203:3308/game_config_db",
-     "dest":"root:wfm0Pass@10.10.10.204:3308/game_config_db",
-     "alter_ignore":{},
-     //  tables: table to check schema,default is all.eg :["order_*","goods"]
+     "source":"root:wfm0Pass@10.10.10.203:3308",
+     "dest":"root:wfm0Pass@10.10.10.204:3308",
+     "schemas": ["game_config_db"],
+     // tables to sync\neg : product_base,order_*
      "tables":[],
-     //  tables_ignore: table to ignore check schema,default is Null :["order_*","goods"]
+     // tables ignore sync\neg : product_base,order_*,*_bak*
      "tables_ignore":["*_bak*"],
+     // tables to compare data\neg : product_base,order_*,*_bak*
      "tables_compare_data":["sys_*"]
 }

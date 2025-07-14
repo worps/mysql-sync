@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // SchemaSync 配置文件
@@ -13,13 +15,29 @@ type SchemaSync struct {
 	DestDb   *MyDb
 }
 
+var syncInstance *SchemaSync
+
 // NewSchemaSync 对一个配置进行同步
 func NewSchemaSync(config *Config) *SchemaSync {
-	s := new(SchemaSync)
-	s.Config = config
-	s.SourceDb = NewMyDb(config.SourceDSN, "source", config.SourceSSH)
-	s.DestDb = NewMyDb(config.DestDSN, "dest", config.DestSSH)
-	return s
+	if syncInstance == nil {
+		syncInstance = new(SchemaSync)
+		syncInstance.Config = config
+		syncInstance.SourceDb = NewMyDb(config.SourceDSN, config.Schemas[0], "source", config.SourceSSH)
+		syncInstance.DestDb = NewMyDb(config.DestDSN, config.Schemas[0], "dest", config.DestSSH)
+	}
+	return syncInstance
+}
+
+// use dbName
+func (sc *SchemaSync) UseDb(dbname string) {
+
+	if sc.SourceDb.DbName != dbname {
+		syncInstance.SourceDb = NewMyDb(sc.Config.SourceDSN, dbname, "source", sc.Config.SourceSSH)
+	}
+	if sc.DestDb.DbName != dbname {
+		syncInstance.DestDb = NewMyDb(sc.Config.DestDSN, dbname, "dest", sc.Config.DestSSH)
+	}
+	fmt.Printf("------------------------ db %s -------------------------\n", dbname)
 }
 
 // GetNewTableNames 获取所有新增加的表名
@@ -106,15 +124,11 @@ func (sc *SchemaSync) getAlterDataBySchema(table string, sSchema string, dSchema
 func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	sourceMyS := alter.SchemaDiff.Source
 	destMyS := alter.SchemaDiff.Dest
-	table := alter.Table
 	var beforeFieldName string
 	var alterLines []string
 	var fieldCount int = 0
 	// 比对字段
 	for el := sourceMyS.Fields.Front(); el != nil; el = el.Next() {
-		if sc.Config.IsIgnoreField(table, el.Key.(string)) {
-			continue
-		}
 		var alterSQL string
 		if destDt, has := destMyS.Fields.Get(el.Key); has {
 			if el.Value != destDt {
@@ -143,9 +157,6 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	// 源库已经删除的字段
 	if sc.Config.Drop {
 		for _, name := range destMyS.Fields.Keys() {
-			if sc.Config.IsIgnoreField(table, name.(string)) {
-				continue
-			}
 			if _, has := sourceMyS.Fields.Get(name); !has {
 				alterSQL := fmt.Sprintf("drop `%s`", name)
 				alterLines = append(alterLines, alterSQL)
@@ -157,9 +168,6 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 
 	// 比对索引
 	for indexName, idx := range sourceMyS.IndexAll {
-		if sc.Config.IsIgnoreIndex(table, indexName) {
-			continue
-		}
 		dIdx, has := destMyS.IndexAll[indexName]
 		var alterSQLs []string
 		if has {
@@ -177,9 +185,6 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	// drop index
 	if sc.Config.Drop {
 		for indexName, dIdx := range destMyS.IndexAll {
-			if sc.Config.IsIgnoreIndex(table, indexName) {
-				continue
-			}
 			var dropSQL string
 			if _, has := sourceMyS.IndexAll[indexName]; !has {
 				dropSQL = dIdx.alterDropSQL()
@@ -193,9 +198,6 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 
 	// 比对外键
 	for foreignName, idx := range sourceMyS.ForeignAll {
-		if sc.Config.IsIgnoreForeignKey(table, foreignName) {
-			continue
-		}
 		dIdx, has := destMyS.ForeignAll[foreignName]
 		var alterSQLs []string
 		if has {
@@ -213,9 +215,6 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	// drop 外键
 	if sc.Config.Drop {
 		for foreignName, dIdx := range destMyS.ForeignAll {
-			if sc.Config.IsIgnoreForeignKey(table, foreignName) {
-				continue
-			}
 			var dropSQL string
 			if _, has := sourceMyS.ForeignAll[foreignName]; !has {
 				dropSQL = dIdx.alterDropSQL()
@@ -277,13 +276,13 @@ func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
 }
 
 // check data change
-func CheckDiffData(cfg *Config) {
+func (sc *SchemaSync) CheckDiffData(cfg *Config) {
 	if len(cfg.TablesCompareData) == 0 {
 		fmt.Println("# Tables to CompareData is empty")
 		return
 	}
 
-	sc := NewSchemaSync(cfg)
+	// sc := NewSchemaSync(cfg)
 	allTables := sc.SourceDb.GetTableNames()
 	dstTables := sc.DestDb.GetTableNames()
 
@@ -302,13 +301,13 @@ func CheckDiffData(cfg *Config) {
 		// 查询第一个表
 		rows1, err := sc.SourceDb.Query(fmt.Sprintf("CHECKSUM TABLE `%s`", table))
 		if err != nil {
-			log.Fatal("failed to fetch line data", err)
+			log.Fatal("failed to fetch line data: ", err)
 		}
 		defer rows1.Close()
 
 		rows2, err := sc.DestDb.Query(fmt.Sprintf("CHECKSUM TABLE `%s`", table))
 		if err != nil {
-			log.Fatal("failed to fetch line data", err)
+			log.Fatal("failed to fetch line data: ", err)
 		}
 		defer rows2.Close()
 
@@ -458,4 +457,35 @@ runSync:
 	if sc.Config.Sync {
 		log.Println("execute_all_sql_done, success_total:", countSuccess, "failed_total:", countFailed)
 	}
+}
+
+// compare two sql result
+func CompareSqlResult(cfg *Config, sql string) {
+	sc := NewSchemaSync(cfg)
+
+	showResult := func(db *MyDb) {
+		dbx := sqlx.NewDb(db.Db, "mysql")
+		rows, err := dbx.Queryx(sql)
+		if err != nil {
+			log.Fatal("query error: ", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var result = make(map[string]interface{}) // 使用map来存储列名和值对
+			err := rows.MapScan(result)
+			if err != nil {
+				log.Fatal("result scan failed: ", err)
+			}
+			for key, value := range result { // 遍历map的每个键值对
+				fmt.Printf("%s: %d\t", key, value) // 打印每个键值对，自定义格式化输出
+			}
+			fmt.Println("")
+		}
+	}
+
+	fmt.Println("# sql result on sourceDSN")
+	showResult(sc.SourceDb)
+	fmt.Println("# sql result on destDSN")
+	showResult(sc.DestDb)
 }

@@ -11,26 +11,24 @@ MySQL Schema 自动同步工具
 4. 同步**存储过程**
 4. 支持**预览**（只对比不同步变动）  
 5. 对比**数据差异**
-6. 支持屏蔽更新**表、字段、索引、外键**  
-7. 支持本地比线上额外多一些表、字段、索引、外键
+6. 对比同一条sql语句在两个数据库中的执行结果
+7. 根据sql文件向目标库导入sql
 
 ### 配置示例(conf.json):  
 
 ```
 {
       // 同步源
-      "source":"test:test@(127.0.0.1:3306)/test_0",
-      // 待同步到的数据库
-      "dest":"test:test@(127.0.0.1:3306)/test_1",
-      // 同步时忽略的字段和索引，键名为表名
-      "alter_ignore":{
-        "tb1*":{
-            "column":["aaa","a*"],
-            "index":["aa"],
-            "foreign":[]
-        }
-      },
-      //  要检查的表，默认所有表，支持通配符
+      "source":"test:test@127.0.0.1:3306",
+      //（可选）同步源在内网，支持ssh通道连接mysql，支持通过私钥连接ssh
+      "source_ssh":"root:passwd123@14.xx.xx.xx:22",
+      // 目标源
+      "dest":"test:test@127.0.0.1:3306",
+      //（可选）目标源在内网，支持ssh通道连接mysql，支持通过私钥连接ssh
+      "dest_ssh":"root@14.xx.xx.xx:22/data/default.key",
+      // 要处理的数据库名
+      "schemas": ["game_config_db"],
+      // 要检查的表，默认所有表，支持通配符
       "tables":[],
       // 要忽略的表，支持通配符
       "tables_ignore": [],
@@ -53,33 +51,28 @@ sync.exe -conf conf.json -sync
 
 ```shell
 sync.exe -drop -conf conf.json >db_alter.sql
-
 ```
+
+### 对比查询结果
+```shell
+sync.exe -conf conf.json -sql_check "select count(1) as cc from game_main_db.club"
+```
+
+### 导入sql文件到目标库
+sync.exe -conf conf.json -sql_file ./data.sql
 
 ### 运行参数说明
 
 ```shell
-sync.exe [-conf] [-dest] [-source] [-sync] [-drop]
-```
-
-说明：
-
-```shell
 sync.exe -help  
-  -conf string
-        配置文件名称
-  -dest string
-        待同步的数据库 eg: test@(10.10.0.1:3306)/test_1
-        该项不为空时，忽略读入 -conf参数项
-  -drop
-        是否对本地多出的字段和索引进行删除 默认否
-  -source string
-        mysql 同步源,eg test@(127.0.0.1:3306)/test_0
-  -sync
-        是否将修改同步到数据库中去，默认否
-  -tables string
-        待检查同步的数据库表，为空则是全部
-        eg : product_base,order_*
-  -single_schema_change
-        生成 SQL DDL 语言每条命令是否只会进行单个修改操作，默认否
+      -conf
+            配置文件名称
+      -drop
+            是否对本地多出的字段和索引进行删除 默认否
+      -sync
+            是否将修改同步到数据库中去，默认否
+      -sql_check
+            检查sql语句在两个库的执行结果
+      -sql_file
+            导入sql文件到目标库
 ```
