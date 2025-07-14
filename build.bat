@@ -9,5 +9,5 @@ if "%1" == "linux" (
 		cd /mysrc ^
 		go build -tags netgo -ldflags '-w -s -extldflags "-static"' -o build/dbdiff main.go
 ) else (
-	go build -ldflags '-w -s -extldflags "-static"' -o ./build/dbdiff.exe .\main.go
+	go build -ldflags="-w -s -extldflags '-static'" -o ./build/dbdiff.exe .\main.go
 )

@@ -7,6 +7,7 @@ import (
 	"mysql-sync/internal"
 	"os"
 	"runtime"
+	"strings"
 )
 
 var configPath = flag.String("conf", "./conf.json", "json config file path")
@@ -49,27 +50,25 @@ func compareDSN() {
 
 // 向目标库导入sql
 func importSQL(file string) {
-	var countSuccess, countFailed int
-
 	sqls, err := os.ReadFile(file)
 	if err != nil {
 		log.Fatal("read sql file failed: ", err)
 	}
+	sqlStr := string(sqls)
 
+	sqlArr := strings.Split(sqlStr, ";\n")
 	sc := internal.NewSchemaSync(cfg)
-	ret := sc.SyncSQL4Dest(string(sqls), []string{})
-	if ret == nil {
-		countSuccess++
-	} else {
-		countFailed++
+	err = sc.SyncSQL4Dest(sqlStr, sqlArr)
+	if err != nil {
+		log.Fatalf("execute failed, error: %v\n", err)
 	}
-	log.Println("execute_all_sql_done, success_total:", countSuccess, "failed_total:", countFailed)
+	log.Println("execute_all_sql_done, none error")
 }
 
 // 对比sql在两个dsn执行的结果
 func compareSQL() {
 	if len(*sql2compare) <= 0 {
-		log.Fatalln("param `sql` is necessary")
+		log.Fatalln("param `sql_check` is necessary")
 	}
 	internal.CompareSqlResult(cfg, *sql2compare)
 }

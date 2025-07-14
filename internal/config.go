@@ -121,6 +121,9 @@ func (cfg *Config) Check() {
 	if len(cfg.DestDSN) == 0 {
 		log.Fatal("dest DSN is empty")
 	}
+	if len(cfg.Schemas) <= 0 {
+		log.Fatal("Schemas is empty")
+	}
 }
 
 // LoadConfig load config file
