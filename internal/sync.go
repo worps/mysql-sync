@@ -327,8 +327,8 @@ func CheckAlterProcedure(cfg *Config) {
 	allProcedures := sc.SourceDb.GetProcedureNames()
 
 	for _, proceName := range allProcedures {
-		srcProcedureStr := sc.SourceDb.GetProcedureSchema(proceName)
-		dstProcedureStr := sc.DestDb.GetProcedureSchema(proceName)
+		srcProcedureStr := sc.SourceDb.GetProcedureSchema(proceName, true)
+		dstProcedureStr := sc.DestDb.GetProcedureSchema(proceName, false)
 
 		if srcProcedureStr != dstProcedureStr {
 			// 不支持直接执行语句 DELIMITER $$

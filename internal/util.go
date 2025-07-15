@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -57,4 +58,14 @@ func simpleMatch(patternStr string, str string, msg ...string) bool {
 		log.Println("simple_match:error", msg, "patternStr:", patternStr, "pattern:", pattern, "str:", str, "err:", err)
 	}
 	return match
+}
+
+// url解码以支持密码中包含特殊字符
+func decodePass(pass string) string {
+	// 使用url.QueryUnescape解码
+	decodes, err := url.QueryUnescape(pass)
+	if err != nil {
+		log.Fatalf("URL解码错误:", err)
+	}
+	return string(decodes)
 }

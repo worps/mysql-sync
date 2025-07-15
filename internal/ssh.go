@@ -33,7 +33,7 @@ func MysqlUseSsh(dsnName string, dsn string) {
 		config := &ssh.ClientConfig{
 			User: matches[1],
 			Auth: []ssh.AuthMethod{
-				ssh.Password(matches[2]),
+				ssh.Password(decodePass(matches[2])),
 			},
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(), // 注意：生产环境中应使用ssh.FixedHostKey(hostKey)来确保安全性
 		}

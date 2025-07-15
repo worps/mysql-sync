@@ -28,9 +28,9 @@ func NewMyDb(dsn string, dbname string, dsnName string, ssh string) *MyDb {
 
 	if len(ssh) > 0 {
 		MysqlUseSsh(dsnName, ssh)
-		dsn = fmt.Sprintf("%s:%s@%s(%s:%s)/%s", matches[1], matches[2], dsnName, matches[3], matches[4], dbname)
+		dsn = fmt.Sprintf("%s:%s@%s(%s:%s)/%s", matches[1], decodePass(matches[2]), dsnName, matches[3], matches[4], dbname)
 	} else {
-		dsn = fmt.Sprintf("%s:%s@(%s:%s)/%s", matches[1], matches[2], matches[3], matches[4], dbname)
+		dsn = fmt.Sprintf("%s:%s@(%s:%s)/%s", matches[1], decodePass(matches[2]), matches[3], matches[4], dbname)
 	}
 
 	db, err := sql.Open("mysql", dsn)
@@ -127,10 +127,12 @@ func (db *MyDb) GetTableSchema(name string) (schema string) {
 }
 
 // Get procedure schema
-func (db *MyDb) GetProcedureSchema(name string) (schema string) {
+func (db *MyDb) GetProcedureSchema(name string, showError bool) (schema string) {
 	rs, err := db.Query(fmt.Sprintf("show create PROCEDURE `%s`", name))
 	if err != nil {
-		log.Println(err)
+		if showError {
+			log.Println(err)
+		}
 		return
 	}
 	defer rs.Close()
