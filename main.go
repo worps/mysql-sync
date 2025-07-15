@@ -7,7 +7,6 @@ import (
 	"mysql-sync/internal"
 	"os"
 	"runtime"
-	"strings"
 )
 
 var configPath = flag.String("conf", "./conf.json", "json config file path")
@@ -56,9 +55,8 @@ func importSQL(file string) {
 	}
 	sqlStr := string(sqls)
 
-	sqlArr := strings.Split(sqlStr, ";\n")
 	sc := internal.NewSchemaSync(cfg)
-	err = sc.SyncSQL4Dest(sqlStr, sqlArr)
+	err = sc.SyncSQL4Dest(sqlStr)
 	if err != nil {
 		log.Fatalf("execute failed, error: %v\n", err)
 	}

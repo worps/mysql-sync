@@ -229,48 +229,37 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 }
 
 // SyncSQL4Dest sync schema change
-func (sc *SchemaSync) SyncSQL4Dest(sqlStr string, sqls []string) error {
+func (sc *SchemaSync) SyncSQL4Dest(sqlStr string) error {
 	sqlStr = strings.TrimSpace(sqlStr)
 	if len(sqlStr) == 0 {
 		return nil
 	}
 	t := newMyTimer()
-	ret, err := sc.DestDb.Query(sqlStr)
+	sqls := strings.Split(string(sqlStr), ";\n")
 
-	defer func() {
-		if ret != nil {
-			err := ret.Close()
-			if err != nil {
-				log.Println("close ret error:", err)
-				return
-			}
-		}
-	}()
+	tx, err := sc.DestDb.Db.Begin()
+	if err != nil {
+		log.Println("trans Begin err: ", err)
+		return err
+	}
 
-	// how to enable allowMultiQueries?
-	if err != nil && len(sqls) > 1 {
-		tx, errTx := sc.DestDb.Db.Begin()
-		if errTx == nil {
-			for _, sql := range sqls {
-				ret, err = tx.Query(sql)
-				if err != nil {
-					log.Println("error query_one:[", sql, "]", err)
-					break
-				}
-			}
-			if err == nil {
-				err = tx.Commit()
-			} else {
-				_ = tx.Rollback()
-			}
+	for _, sql := range sqls {
+		_, err = tx.Query(sql)
+		if err != nil {
+			log.Println("error query_one:[", sql, "]", err)
+			break
 		}
 	}
+	if err == nil {
+		err = tx.Commit()
+	} else {
+		_ = tx.Rollback()
+	}
+
 	t.stop()
 	if err != nil {
 		log.Println("EXEC_SQL_FAILED:", err)
-		return err
 	}
-	_, err = ret.Columns()
 	return err
 }
 
@@ -433,7 +422,7 @@ runSync:
 		var ret error
 
 		if sc.Config.Sync {
-			ret = sc.SyncSQL4Dest(sql, sqls)
+			ret = sc.SyncSQL4Dest(sql)
 			if ret == nil {
 				countSuccess++
 			} else {
