@@ -23,7 +23,7 @@ MySQL Schema 自动同步工具
       //（可选）同步源在内网，支持ssh通道连接mysql，支持通过私钥连接ssh
       "source_ssh":"root:passwd123@14.xx.xx.xx:22",
       // 目标源
-      "dest":"test:test@127.0.0.1:3306",
+      "dest":"test:test@127.0.0.1:3308",
       //（可选）目标源在内网，支持ssh通道连接mysql，支持通过私钥连接ssh
       "dest_ssh":"root@14.xx.xx.xx:22/data/default.key",
       // 要处理的数据库名
