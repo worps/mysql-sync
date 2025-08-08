@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -100,6 +101,14 @@ func (sc *SchemaSync) getAlterDataBySchema(table string, sSchema string, dSchema
 		alter.Type = alterTypeCreate
 		alter.Comment = "目标数据库不存在，创建"
 		alter.SQL = append(alter.SQL, fmtTableCreateSQL(sSchema)+";")
+		return alter
+	}
+
+	// 比对引擎和字符集
+	alterEng := sc.getTableEngDiff(table, sSchema, dSchema)
+	if len(alterEng) > 0 {
+		alter.Type = alterTypeAlter
+		alter.SQL = append(alter.SQL, alterEng)
 		return alter
 	}
 
@@ -226,6 +235,25 @@ func (sc *SchemaSync) getSchemaDiff(alter *TableAlterData) []string {
 	}
 
 	return alterLines
+}
+
+// 返回格式：ALTER TABLE `auth_group_menu` ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+func (sc *SchemaSync) getTableEngDiff(table string, srcSchemaRaw string, dstSchemaRaw string) string {
+	srcSchema := strings.Split(srcSchemaRaw, "\n")
+	dstSchema := strings.Split(dstSchemaRaw, "\n")
+	srcTableEng := srcSchema[len(srcSchema)-1]
+	dstTableEng := dstSchema[len(dstSchema)-1]
+
+	// 去除字符串中 AUTO_xx=xxx 部分
+	re := regexp.MustCompile(`AUTO_INCREMENT=\d+\s*`)
+	srcTableEng = re.ReplaceAllString(srcTableEng, "")
+	dstTableEng = re.ReplaceAllString(dstTableEng, "")
+
+	if srcTableEng != dstTableEng {
+		nameAlter := fmt.Sprintf("ALTER TABLE `%s`", table)
+		return strings.Replace(srcTableEng, ")", nameAlter, 1)
+	}
+	return ""
 }
 
 // SyncSQL4Dest sync schema change

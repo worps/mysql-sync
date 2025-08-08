@@ -12,7 +12,8 @@
             "program": "${workspaceFolder}/main.go",
             "dlvFlags": [
                 "--check-go-version=false"
-            ]
+            ],
+            "args": ["-conf", "build/conf/game-alpha2wxsh.json"],
         },
         {
             "name": "debug compare sql",

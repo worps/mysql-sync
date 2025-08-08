@@ -38,7 +38,7 @@ MySQL Schema 自动同步工具
 ```
 ### 编译
 ```shell
-go build -tags netgo -ldflags '-w -s -extldflags "-static"' -o sync.exe .\main.go
+go build -tags netgo -ldflags '-w -s -extldflags "-static"' -o .\build\dbdiff.exe .\main.go
 ```
 
 ### 直接进行同步
